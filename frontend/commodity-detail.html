@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commodity Detail - FutureCrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .detail-hero {
+            background: var(--green-primary);
+            padding: 60px 5%;
+            text-align: center;
+            color: white;
+        }
+
+        .detail-hero .icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .detail-hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            text-transform: capitalize;
+        }
+
+        .category-badge {
+            background: var(--orange);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        .detail-container {
+            max-width: 1000px;
+            margin: -40px auto 60px;
+            background: white;
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 8px;
+            border: 1px solid #eee;
+        }
+
+        .stat-card h3 {
+            font-size: 2rem;
+            color: var(--green-primary);
+            margin-bottom: 5px;
+        }
+
+        .stat-card p {
+            color: #666;
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            margin-top: 40px;
+            padding-top: 40px;
+            border-top: 1px solid #eee;
+        }
+
+        .back-btn {
+            display: inline-block;
+            margin-top: 20px;
+            color: var(--green-primary);
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .back-btn:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html">HOME</a></li>
+            <li><a href="index.html#about">ABOUT</a></li>
+            <li><a href="index.html#services">SERVICE</a></li>
+            <li><a href="predict.html">PREDICT</a></li>
+            <li><a href="commodity.html" class="active">COMMODITY</a></li>
+            <li><a href="upload.html">UPLOAD</a></li>
+            <li><a href="accuracy.html">ACCURACY</a></li>
+        </ul>
+    </nav>
+
+    <div id="loading" style="text-align: center; padding: 100px;">
+        <i class="fas fa-spinner fa-spin fa-3x" style="color: var(--green-primary);"></i>
+        <p style="margin-top: 20px; color: #666;">Loading commodity details...</p>
+    </div>
+
+    <div id="content" style="display: none;">
+        <section class="detail-hero">
+            <span class="icon" id="cropIcon">🌱</span>
+            <h1 id="cropName">Loading...</h1>
+            <span class="category-badge" id="cropCategory">Category</span>
+        </section>
+
+        <div class="detail-container">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <h3 id="avgYield">-</h3>
+                    <p>Average Yield (kg/ha)</p>
+                </div>
+                <div class="stat-card">
+                    <h3>2025</h3>
+                    <p>Next Projection</p>
+                </div>
+                <!-- Placeholder stats since we don't have all metadata -->
+                <div class="stat-card">
+                    <h3>High</h3>
+                    <p>Demand Status</p>
+                </div>
+            </div>
+
+            <div class="description-section">
+                <h2>About this Crop</h2>
+                <p>
+                    <span id="cropNameText"></span> is a key agricultural commodity in our database.
+                    Our AI models analyze historical data including Nitrogen, Phosphorus, Potassium,
+                    Temperature, Humidity, pH, and Rainfall to predict its yield accuracy.
+                </p>
+            </div>
+
+            <div class="chart-container">
+                <div style="text-align: center;">
+                    <a href="predict.html" class="btn btn-primary"
+                        style="background: var(--green-primary); color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px;">
+                        Predict Prices for this Crop
+                    </a>
+                </div>
+            </div>
+
+            <a href="commodity.html" class="back-btn"><i class="fas fa-arrow-left"></i> Back to Commodities</a>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+
+        async function loadDetail() {
+            // Get crop name from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            // The ID from URL might be 'rice' or 'chickpea'
+            const cropId = urlParams.get('name');
+
+            if (!cropId) {
+                window.location.href = 'commodity.html';
+                return;
+            }
+
+            try {
+                const res = await fetch(`${API_URL}/api/commodities`);
+                const data = await res.json();
+
+                // Find the specific crop
+                const crop = data.commodities.find(c => c.id === cropId || c.name.toLowerCase() === cropId.toLowerCase());
+
+                if (crop) {
+                    document.getElementById('cropName').textContent = crop.name;
+                    document.getElementById('cropNameText').textContent = crop.name;
+                    document.getElementById('cropIcon').textContent = crop.icon || '🌱';
+                    document.getElementById('cropCategory').textContent = crop.category;
+                    document.getElementById('avgYield').textContent = crop.avg_price; // It's yield actually
+
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('content').style.display = 'block';
+                } else {
+                    alert('Crop not found!');
+                    window.location.href = 'commodity.html';
+                }
+
+            } catch (err) {
+                console.error('Error:', err);
+                document.getElementById('loading').innerHTML = '<p style="color: red">Error loading data. Please ensure backend is running.</p>';
+            }
+        }
+
+        loadDetail();
+    </script>
+</body>
+
+</html>

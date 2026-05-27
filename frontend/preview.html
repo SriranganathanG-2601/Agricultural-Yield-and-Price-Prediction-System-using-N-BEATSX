@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview - FutureCrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .data-section {
+            padding: 20px 5%;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 30px;
+        }
+
+        .data-table th {
+            background: var(--green-primary);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 500;
+        }
+
+        .data-table td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .data-table tr:nth-child(even) {
+            background: #f9f9f9;
+        }
+
+        .data-table tr:hover {
+            background: #e8f5e9;
+        }
+
+        .train-btn {
+            display: block;
+            margin: 20px auto;
+            background: var(--green-primary);
+            color: white;
+            padding: 12px 40px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .train-btn:hover {
+            background: var(--green-dark);
+        }
+
+        .status-message {
+            text-align: center;
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-message.loading {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html">HOME</a></li>
+            <li><a href="index.html#about">ABOUT</a></li>
+            <li><a href="index.html#services">SERVICE</a></li>
+            <li><a href="predict.html">PREDICT</a></li>
+            <li><a href="commodity.html" class="active">WORKING</a></li>
+            <li><a href="accuracy.html">ACCURACY</a></li>
+        </ul>
+    </nav>
+
+    <section class="data-section">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Date Code</th>
+                    <th>Commodity</th>
+                    <th>Arrival Date</th>
+                    <th>Price (₹)</th>
+                </tr>
+            </thead>
+            <tbody id="dataBody">
+                <tr>
+                    <td colspan="4">Loading...</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <button class="train-btn" onclick="trainModel()">Click to Train & Test</button>
+        <div id="statusMessage"></div>
+    </section>
+
+    <button class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+
+        async function loadPreviewData() {
+            try {
+                const res = await fetch(`${API_URL}/api/preview`);
+                const result = await res.json();
+
+                const dataBody = document.getElementById('dataBody');
+                dataBody.innerHTML = result.data.map(row => `
+                    <tr>
+                        <td>${row.code}</td>
+                        <td>${row.commodity}</td>
+                        <td>${row.date}</td>
+                        <td>${row.price}</td>
+                    </tr>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading preview:', err);
+            }
+        }
+
+        async function trainModel() {
+            const statusEl = document.getElementById('statusMessage');
+            statusEl.className = 'status-message loading';
+            statusEl.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training in progress... Please wait.';
+
+            try {
+                const res = await fetch(`${API_URL}/api/train`, { method: 'POST' });
+                const data = await res.json();
+
+                statusEl.className = 'status-message success';
+                statusEl.innerHTML = `
+                    <i class="fas fa-check-circle"></i> Training Complete!<br>
+                    <strong>RMSE:</strong> ${data.metrics.RMSE} | 
+                    <strong>MAE:</strong> ${data.metrics.MAE} | 
+                    <strong>MAPE:</strong> ${data.metrics.MAPE}%
+                `;
+            } catch (err) {
+                statusEl.className = 'status-message error';
+                statusEl.innerHTML = `<i class="fas fa-exclamation-circle"></i> Error: ${err.message}`;
+            }
+        }
+
+        loadPreviewData();
+    </script>
+</body>
+
+</html>

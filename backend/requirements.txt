@@ -1,0 +1,9 @@
+flask
+flask-cors
+pandas
+numpy
+torch
+neuralforecast
+matplotlib
+scikit-learn
+openpyxl

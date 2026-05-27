@@ -1,0 +1,793 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Predict - FutureCrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <!-- Add Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .predict-hero {
+            background: var(--green-primary);
+            padding: 40px 5%;
+            text-align: center;
+        }
+
+        .predict-hero h1 {
+            color: var(--orange);
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .predict-hero .result-text {
+            color: white;
+            font-size: 1.2rem;
+            min-height: 30px;
+        }
+
+        .predict-hero .result-text .price {
+            background: var(--orange);
+            padding: 2px 8px;
+            border-radius: 3px;
+        }
+
+        .predict-container {
+            max-width: 900px;
+            margin: -30px auto 60px;
+            background: white;
+            border: 3px solid var(--text-dark);
+            border-radius: 5px;
+            padding: 30px;
+        }
+
+        .predict-container label {
+            display: block;
+            color: #666;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+        }
+
+        .commodity-select {
+            width: 100%;
+            height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            font-size: 1rem;
+            margin-bottom: 15px;
+            overflow-y: auto;
+        }
+
+        .commodity-select option {
+            padding: 8px 10px;
+            cursor: pointer;
+        }
+
+        .commodity-select option:hover,
+        .commodity-select option:checked {
+            background: var(--green-primary);
+            color: white;
+        }
+
+        .year-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            color: #666;
+            align-items: center;
+        }
+
+        .year-row span {
+            margin-right: 10px;
+        }
+
+        .year-btn {
+            padding: 5px 15px;
+            border: 1px solid #ddd;
+            background: white;
+            cursor: pointer;
+            border-radius: 3px;
+            transition: all 0.3s;
+        }
+
+        .year-btn.active {
+            background: var(--green-primary);
+            color: white;
+            border-color: var(--green-primary);
+        }
+
+        .btn-row {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .predict-btn,
+        .train-btn {
+            padding: 12px 40px;
+            border: none;
+            border-radius: 4px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .predict-btn {
+            background: var(--green-primary);
+            color: white;
+        }
+
+        .predict-btn:hover {
+            background: var(--green-dark);
+        }
+
+        .train-btn {
+            background: var(--orange);
+            color: white;
+        }
+
+        .train-btn:hover {
+            background: #e65100;
+        }
+
+        .train-btn:disabled,
+        .predict-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+
+        .status-message {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .status-message.success {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-message.loading {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .status-message.error {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .status-message.info {
+            background: #e3f2fd;
+            color: #1565c0;
+        }
+
+        .model-info {
+            background: #f5f5f5;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-size: 0.9rem;
+        }
+
+        .model-info h4 {
+            margin-bottom: 10px;
+            color: var(--text-dark);
+        }
+
+        .model-info .metric {
+            display: inline-block;
+            margin-right: 20px;
+        }
+
+        .model-info .metric span {
+            font-weight: 600;
+            color: var(--green-primary);
+        }
+
+        .main-footer {
+            background: var(--green-primary);
+            color: white;
+            padding: 60px 5% 0;
+        }
+
+        .footer-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 30px;
+        }
+
+        .footer-col h4 {
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+
+        .footer-col p,
+        .footer-col li {
+            margin-bottom: 10px;
+            opacity: 0.9;
+            font-size: 0.95rem;
+        }
+
+        .footer-col ul {
+            list-style: none;
+        }
+
+        .footer-col a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .newsletter-col {
+            background: var(--orange);
+            padding: 30px;
+            margin: -60px 0 0 0;
+            border-radius: 5px 5px 0 0;
+        }
+
+        .newsletter-input {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .newsletter-input input {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 3px;
+        }
+
+        .newsletter-input button {
+            padding: 10px 20px;
+            background: var(--green-dark);
+            color: white;
+            border: none;
+            border-radius: 3px;
+            cursor: pointer;
+        }
+
+        .footer-bottom {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        @media (max-width: 768px) {
+            .footer-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .newsletter-col {
+                margin: 20px 0 0 0;
+            }
+
+            .btn-row {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="top-bar">
+        <div class="contact-info">
+            <i class="fas fa-headphones"></i>
+            <span>+91 9876543210</span>
+        </div>
+        <h1 class="brand">Future<span>Crop</span></h1>
+    </div>
+
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html">HOME</a></li>
+            <li><a href="index.html#about">ABOUT</a></li>
+            <li><a href="index.html#services">SERVICE</a></li>
+            <li><a href="#" class="active">PREDICT</a></li>
+            <li><a href="commodity.html">WORKING</a></li>
+            <li><a href="upload.html">UPLOAD</a></li>
+            <li><a href="accuracy.html">ACCURACY</a></li>
+        </ul>
+    </nav>
+
+    <section class="predict-hero">
+        <h1>Pulses, Vegetable and Fruit Yield Prediction</h1>
+
+        <!-- Results Section -->
+        <div id="resultContainer" style="display: none; margin-top: 20px;">
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap;">
+
+                <!-- Yield Card -->
+                <div
+                    style="background: white; padding: 20px; border-radius: 8px; text-align: center; min-width: 200px;">
+                    <div style="font-size: 0.9rem; color: #666;">Predicted Yield</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: var(--green-primary); margin: 10px 0;">
+                        <span id="resYield">-</span> <span style="font-size: 1rem;">kg/ha</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #888;">Production</div>
+                </div>
+
+                <!-- Price/kg Card -->
+                <div
+                    style="background: white; padding: 20px; border-radius: 8px; text-align: center; min-width: 200px;">
+                    <div style="font-size: 0.9rem; color: #666;">Est. Market Price</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: var(--orange); margin: 10px 0;">
+                        ₹<span id="resPriceKg">-</span> <span style="font-size: 1rem;">/kg</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #888;">Retail Price</div>
+                </div>
+
+                <!-- Price/Quintal Card -->
+                <div
+                    style="background: white; padding: 20px; border-radius: 8px; text-align: center; min-width: 200px;">
+                    <div style="font-size: 0.9rem; color: #666;">Wholesale Price</div>
+                    <div style="font-size: 1.8rem; font-weight: bold; color: #1565c0; margin: 10px 0;">
+                        ₹<span id="resPriceQuintal">-</span> <span style="font-size: 1rem;">/100kg</span>
+                    </div>
+                    <div style="font-size: 0.8rem; color: #888;">Per Quintal</div>
+                </div>
+
+            </div>
+
+            <!-- Graph Section -->
+            <div
+                style="background: white; padding: 20px; border-radius: 8px; margin-top: 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); width: 90%; max-width: 800px; margin-left: auto; margin-right: auto;">
+                <h3 style="color: #333; margin-bottom: 15px; text-align: center; font-size: 1.1rem;">Price Trend
+                    Forecast (Next 30 Days)</h3>
+                <img id="predictionGraph" src="" alt="Prediction Graph"
+                    style="width: 100%; height: auto; display: none; border-radius: 4px;">
+            </div>
+
+            <p style="margin-top: 15px; color: #eee; font-size: 0.9rem;">
+                Prediction for <span id="resCrop" style="font-weight: bold;">-</span> in <span id="resYear">2025</span>
+            </p>
+        </div>
+    </section>
+
+    <div class="predict-container">
+        <!-- Location & Weather Section -->
+        <div style="background: #f0f8ff; padding: 20px; border-radius: 8px; margin-bottom: 30px; border-left: 4px solid var(--green-primary);">
+            <label style="font-weight: 600; color: var(--text-dark); display: block; margin-bottom: 15px;">
+                <i class="fas fa-map-pin"></i> Location for Real-time Weather
+            </label>
+            <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+                <input type="text" id="locationInput" placeholder="Enter city name (e.g., Mumbai, Delhi, Bangalore, Chennai, Hyderabad)" 
+                    style="flex: 1; padding: 12px; border: 1px solid #ddd; border-radius: 4px; font-size: 1rem;">
+                <button onclick="fetchWeather()" style="padding: 12px 25px; background: var(--green-primary); color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: 600;">
+                    <i class="fas fa-cloud"></i> Get Weather
+                </button>
+            </div>
+            <div style="font-size: 0.85rem; color: #666; margin-bottom: 10px;">
+                💡 Tip: Use your city name for best results.
+            </div>
+            
+            <!-- Weather Info Cards -->
+            <div id="weatherInfo" style="display: none; display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 15px; margin-bottom: 20px;">
+                <div style="background: white; padding: 15px; border-radius: 6px; text-align: center; border: 1px solid #ddd;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Temperature</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--orange);">
+                        <span id="weatherTemp">-</span>°C
+                    </div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; text-align: center; border: 1px solid #ddd;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Humidity</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: var(--green-primary);">
+                        <span id="weatherHumidity">-</span>%
+                    </div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; text-align: center; border: 1px solid #ddd;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Rainfall</div>
+                    <div style="font-size: 1.5rem; font-weight: bold; color: #1565c0;">
+                        <span id="weatherRainfall">-</span> mm
+                    </div>
+                </div>
+                <div style="background: white; padding: 15px; border-radius: 6px; text-align: center; border: 1px solid #ddd;">
+                    <div style="font-size: 0.85rem; color: #666; margin-bottom: 8px;">Condition</div>
+                    <div style="font-size: 1.1rem; font-weight: 600; color: #555;">
+                        <span id="weatherCondition">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Weather-Based Advice -->
+            <div id="weatherAdvice" style="display: none; background: #fff9e6; padding: 20px; border-radius: 8px; border-left: 4px solid var(--orange); margin-bottom: 20px;">
+                <div style="display: flex; gap: 15px;">
+                    <div style="font-size: 1.5rem;">💡</div>
+                    <div style="flex: 1;">
+                        <h4 style="margin: 0 0 10px 0; color: var(--text-dark);">Weather-Based Crop Advisory</h4>
+                        <div id="advisoryText" style="color: #666; font-size: 0.95rem; margin-bottom: 15px; line-height: 1.5;"></div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 15px;">
+                            <div style="background: white; padding: 12px; border-radius: 4px; border-left: 3px solid var(--green-primary);">
+                                <div style="font-weight: 600; color: var(--green-primary); font-size: 0.9rem; margin-bottom: 5px;">✅ Best Crops</div>
+                                <div id="bestCrops" style="color: #666; font-size: 0.85rem;"></div>
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 4px; border-left: 3px solid #ff9800;">
+                                <div style="font-weight: 600; color: #ff9800; font-size: 0.9rem; margin-bottom: 5px;">⚠️ Caution Crops</div>
+                                <div id="cautionCrops" style="color: #666; font-size: 0.85rem;"></div>
+                            </div>
+                            <div style="background: white; padding: 12px; border-radius: 4px; border-left: 3px solid #d32f2f;">
+                                <div style="font-weight: 600; color: #d32f2f; font-size: 0.9rem; margin-bottom: 5px;">❌ Avoid Crops</div>
+                                <div id="avoidCrops" style="color: #666; font-size: 0.85rem;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <label>Select the Pulses/Vegetable/Fruit</label>
+        <select class="commodity-select" id="commoditySelect" size="8">
+            <option>Loading...</option>
+        </select>
+
+        <div class="year-row">
+            <span>Year :</span>
+            <button class="year-btn active" id="btn2025" onclick="selectYear(2025)">2025</button>
+            <span>Year :</span>
+            <button class="year-btn" id="btn2026" onclick="selectYear(2026)">2026</button>
+        </div>
+
+        <div class="btn-row">
+            <button class="train-btn" id="trainBtn" onclick="trainModel()">
+                <i class="fas fa-brain"></i> Train Model First
+            </button>
+            <button class="predict-btn" id="predictBtn" onclick="predictPrice()">
+                <i class="fas fa-chart-line"></i> Predict the Price
+            </button>
+        </div>
+
+        <div id="statusMessage"></div>
+
+        <div class="model-info" id="modelInfo" style="display: none;">
+            <h4><i class="fas fa-chart-bar"></i> Model Performance</h4>
+            <div class="metric">RMSE: <span id="rmseVal">-</span></div>
+            <div class="metric">MAE: <span id="maeVal">-</span></div>
+            <div class="metric">R²: <span id="r2Val">-</span></div>
+            <div class="metric">MAPE: <span id="mapeVal">-</span>%</div>
+        </div>
+    </div>
+
+    <footer class="main-footer">
+        <div class="footer-grid">
+            <div class="footer-col">
+                <h4>Get In Touch</h4>
+                <p><i class="fas fa-map-marker-alt"></i> 123 Street, State, India</p>
+                <p><i class="fas fa-phone"></i> +91 9876543210</p>
+                <p><i class="fas fa-envelope"></i> info@futurecrop.com</p>
+            </div>
+            <div class="footer-col">
+                <h4>Quick Links</h4>
+                <ul>
+                    <li><a href="index.html"><i class="fas fa-arrow-right"></i> Home</a></li>
+                    <li><a href="index.html#about"><i class="fas fa-arrow-right"></i> About Us</a></li>
+                    <li><a href="#"><i class="fas fa-arrow-right"></i> Predict</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Popular Links</h4>
+                <ul>
+                    <li><a href="index.html"><i class="fas fa-arrow-right"></i> Home</a></li>
+                    <li><a href="upload.html"><i class="fas fa-arrow-right"></i> Upload</a></li>
+                    <li><a href="accuracy.html"><i class="fas fa-arrow-right"></i> Accuracy</a></li>
+                </ul>
+            </div>
+            <div class="footer-col newsletter-col">
+                <h4>Newsletter</h4>
+                <p>Subscribe Our Newsletter</p>
+                <p style="font-size: 0.85rem;">Amet justo diam dolor rebum lorem sit amet justo.</p>
+                <div class="newsletter-input">
+                    <input type="email" placeholder="Your Email">
+                    <button><i class="fas fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <p>&copy; 2024 FutureCrop. All Rights Reserved.</p>
+        </div>
+    </footer>
+
+    <button class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+        // Get your own FREE API key from: https://openweathermap.org/api
+        // Replace the key below with your own
+        const WEATHER_API_KEY = ''; // Your OpenWeatherMap API key
+        let selectedYear = 2025;
+        let isModelTrained = false;
+        let currentWeatherData = null;
+
+        // Check if model is trained on load
+        async function checkModelStatus() {
+            try {
+                const res = await fetch(`${API_URL}/health`);
+                const data = await res.json();
+                isModelTrained = data.model_trained;
+
+                if (isModelTrained) {
+                    document.getElementById('trainBtn').innerHTML = '<i class="fas fa-check"></i> Model Trained';
+                    document.getElementById('trainBtn').style.background = '#2e7d32';
+                    showStatus('Model is ready for predictions!', 'success');
+                } else {
+                    showStatus('Please train the model first before predicting', 'info');
+                }
+            } catch (err) {
+                showStatus('Cannot connect to backend server. Make sure Flask is running.', 'error');
+            }
+        }
+
+        // Fetch real-time weather data
+        async function fetchWeather() {
+            const location = document.getElementById('locationInput').value.trim();
+            if (!location) {
+                showStatus('Please enter a location name', 'error');
+                return;
+            }
+
+            // Check if API key is configured (skip check if key was updated)
+            if (WEATHER_API_KEY === 'e46e49d5b92bcf8d2e62e09242a97ee4' || WEATHER_API_KEY.length < 20) {
+                showStatus('⚠️ Need to set up API key first. Setup: 1) Go to https://openweathermap.org/api 2) Sign up (free) 3) Get key 4) Edit predict.html line ~514 5) Paste key. See GET_WEATHER_API_KEY.md for details.', 'error');
+                console.log('📚 Complete setup guide: GET_WEATHER_API_KEY.md');
+                currentWeatherData = null;
+                return;
+            }
+
+            try {
+                showStatus('Fetching weather data...', 'loading');
+                const url = `https://api.openweathermap.org/data/2.5/weather?q=${encodeURIComponent(location)}&appid=${WEATHER_API_KEY}&units=metric`;
+                console.log('Fetching weather from:', url.replace(WEATHER_API_KEY, 'XXX'));
+                
+                const res = await fetch(url);
+                
+                if (!res.ok) {
+                    const errorData = await res.json();
+                    console.error('Weather API error:', res.status, errorData);
+                    
+                    if (res.status === 401) {
+                        console.log('🔗 Get FREE API key: https://openweathermap.org/api → Sign Up → Copy Key → Replace in frontend/predict.html');
+                        throw new Error('API key needed. Get free key at: https://openweathermap.org/api');
+                    } else if (res.status === 404) {
+                        throw new Error(`City "${location}" not found. Try: Mumbai, Delhi, Bangalore, Chennai, Hyderabad, etc.`);
+                    } else {
+                        throw new Error(`Weather API error (${res.status}). Please try again.`);
+                    }
+                }
+                
+                const data = await res.json();
+                console.log('Weather data received:', data);
+
+                // Extract weather data
+                currentWeatherData = {
+                    location: data.name + (data.sys.country ? ', ' + data.sys.country : ''),
+                    temperature: Math.round(data.main.temp * 10) / 10,
+                    humidity: data.main.humidity,
+                    rainfall: data.clouds ? data.clouds.all : 0,
+                    condition: data.weather[0].main,
+                    pressure: data.main.pressure,
+                    windSpeed: data.wind.speed
+                };
+
+                // Display weather info
+                document.getElementById('weatherInfo').style.display = 'grid';
+                document.getElementById('weatherTemp').textContent = currentWeatherData.temperature;
+                document.getElementById('weatherHumidity').textContent = currentWeatherData.humidity;
+                document.getElementById('weatherRainfall').textContent = currentWeatherData.rainfall;
+                document.getElementById('weatherCondition').textContent = currentWeatherData.condition;
+
+                // Fetch weather-based advice
+                await fetchWeatherAdvice();
+
+                showStatus(`✅ Weather loaded for ${currentWeatherData.location}`, 'success');
+            } catch (err) {
+                console.error('Weather fetch error:', err);
+                showStatus(`❌ Cannot fetch weather: ${err.message}. Using average conditions for prediction.`, 'error');
+                currentWeatherData = null;
+            }
+        }
+
+        // Fetch weather advice from backend
+        async function fetchWeatherAdvice() {
+            if (!currentWeatherData) {
+                console.warn('No weather data available for advice');
+                return;
+            }
+            
+            try {
+                console.log('Fetching weather advice for:', currentWeatherData);
+                const res = await fetch(`${API_URL}/api/weather-advice`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        temperature: currentWeatherData.temperature,
+                        humidity: currentWeatherData.humidity,
+                        rainfall: currentWeatherData.rainfall,
+                        condition: currentWeatherData.condition
+                    })
+                });
+
+                if (!res.ok) {
+                    throw new Error(`Backend error: ${res.status}`);
+                }
+
+                const advice = await res.json();
+                console.log('Weather advice received:', advice);
+                
+                // Display advice
+                document.getElementById('weatherAdvice').style.display = 'block';
+                document.getElementById('advisoryText').textContent = advice.advisory || 'Optimal conditions for farming.';
+                
+                // Display crops
+                const bestCropsList = (advice.best_crops || []).slice(0, 5).join(', ') || 'No specific recommendations';
+                const cautionCropsList = (advice.caution_crops || []).slice(0, 5).join(', ') || 'None';
+                const avoidCropsList = (advice.avoid_crops || []).slice(0, 5).join(', ') || 'None';
+                
+                document.getElementById('bestCrops').textContent = bestCropsList;
+                document.getElementById('cautionCrops').textContent = cautionCropsList;
+                document.getElementById('avoidCrops').textContent = avoidCropsList;
+            } catch (err) {
+                console.error('Could not fetch weather advice:', err);
+                // Don't show error to user - advice is optional
+                document.getElementById('weatherAdvice').style.display = 'none';
+            }
+        }
+
+        // Load vegetables from backend
+        async function loadVegetables() {
+            try {
+                const res = await fetch(`${API_URL}/api/vegetables`);
+                const data = await res.json();
+
+                const select = document.getElementById('commoditySelect');
+                select.innerHTML = '';
+
+                data.vegetables.forEach(veg => {
+                    const option = document.createElement('option');
+                    option.value = veg;
+                    option.textContent = veg;
+                    select.appendChild(option);
+                });
+            } catch (err) {
+                console.error('Error loading vegetables:', err);
+            }
+        }
+
+        function selectYear(year) {
+            selectedYear = year;
+            document.getElementById('btn2025').classList.remove('active');
+            document.getElementById('btn2026').classList.remove('active');
+            document.getElementById('btn' + year).classList.add('active');
+        }
+
+        function showStatus(message, type) {
+            const el = document.getElementById('statusMessage');
+            el.className = 'status-message ' + type;
+            el.innerHTML = message;
+            el.style.display = 'block';
+        }
+
+        async function trainModel() {
+            const btn = document.getElementById('trainBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Training...';
+            showStatus('Training model with your data. This may take a moment...', 'loading');
+
+            try {
+                const res = await fetch(`${API_URL}/api/train`, { method: 'POST' });
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                isModelTrained = true;
+                btn.innerHTML = '<i class="fas fa-check"></i> Model Trained';
+                btn.style.background = '#2e7d32';
+
+                // Show metrics
+                document.getElementById('modelInfo').style.display = 'block';
+                document.getElementById('rmseVal').textContent = data.metrics.RMSE;
+                document.getElementById('maeVal').textContent = data.metrics.MAE;
+                document.getElementById('r2Val').textContent = data.metrics.R2;
+                document.getElementById('mapeVal').textContent = data.metrics.MAPE;
+
+                showStatus(`✅ Model trained successfully! RMSE: ${data.metrics.RMSE}, R²: ${data.metrics.R2}`, 'success');
+            } catch (err) {
+                showStatus(`❌ Training failed: ${err.message}`, 'error');
+                btn.innerHTML = '<i class="fas fa-brain"></i> Train Model First';
+            }
+
+            btn.disabled = false;
+        }
+
+        async function predictPrice() {
+            const select = document.getElementById('commoditySelect');
+            const commodity = select.value;
+
+            if (!commodity) {
+                showStatus('Please select a commodity!', 'error');
+                return;
+            }
+
+            const btn = document.getElementById('predictBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Predicting...';
+
+            // Hide previous graph while loading
+            const graphImg = document.getElementById('predictionGraph');
+            if (graphImg) graphImg.style.display = 'none';
+
+            try {
+                const requestBody = {
+                    product: commodity,
+                    year: selectedYear
+                };
+
+                // Include weather data if available
+                if (currentWeatherData) {
+                    requestBody.weather = {
+                        temperature: currentWeatherData.temperature,
+                        humidity: currentWeatherData.humidity,
+                        rainfall: currentWeatherData.rainfall,
+                        condition: currentWeatherData.condition,
+                        location: currentWeatherData.location
+                    };
+                }
+
+                const res = await fetch(`${API_URL}/api/predict`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(requestBody)
+                });
+                const data = await res.json();
+
+                if (data.error) throw new Error(data.error);
+
+                // Update new result cards
+                document.getElementById('resultContainer').style.display = 'block';
+                document.getElementById('resYield').textContent = data.predicted_yield;
+                document.getElementById('resPriceKg').textContent = data.price_per_kg;
+                document.getElementById('resPriceQuintal').textContent = data.price_per_quintal;
+                document.getElementById('resCrop').textContent = data.commodity;
+                document.getElementById('resYear').textContent = data.year;
+
+                let statusMsg = `Predicted using: ${data.model_used}`;
+                if (currentWeatherData) {
+                    statusMsg += ` | Weather: ${currentWeatherData.temperature}°C, ${currentWeatherData.humidity}% humidity`;
+                }
+                showStatus(statusMsg, 'success');
+
+                // Display Matplotlib Graph
+                if (data.plot_image && graphImg) {
+                    graphImg.src = data.plot_image;
+                    graphImg.style.display = 'block';
+                }
+
+            } catch (err) {
+                showStatus(`❌ Prediction failed: ${err.message}`, 'error');
+            }
+
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fas fa-chart-line"></i> Predict the Price';
+        }
+
+        // Load on page load
+        loadVegetables();
+        checkModelStatus();
+    </script>
+</body>
+
+</html>

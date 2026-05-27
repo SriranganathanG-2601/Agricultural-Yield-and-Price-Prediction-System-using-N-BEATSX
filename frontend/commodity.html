@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Commodities - FutureCrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .commodity-page {
+            padding: 40px 5%;
+            background: #f5f5f5;
+            min-height: calc(100vh - 60px);
+        }
+
+        .commodity-page h1 {
+            font-size: 1.5rem;
+            margin-bottom: 30px;
+            color: var(--text-dark);
+        }
+
+        .commodity-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .commodity-card {
+            background: white;
+            border-radius: 8px;
+            padding: 25px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 1px solid #eee;
+            text-decoration: none;
+        }
+
+        .commodity-card:hover {
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .commodity-card .icon {
+            font-size: 2rem;
+        }
+
+        .commodity-card .name {
+            font-weight: 500;
+            color: var(--text-dark);
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html">HOME</a></li>
+            <li><a href="index.html#about">ABOUT</a></li>
+            <li><a href="index.html#services">SERVICE</a></li>
+            <li><a href="predict.html">PREDICT</a></li>
+            <li><a href="#" class="active">COMMODITY</a></li>
+            <li><a href="upload.html">UPLOAD</a></li>
+            <li><a href="accuracy.html">ACCURACY</a></li>
+        </ul>
+    </nav>
+
+    <section class="commodity-page">
+        <h1>Explore by commodity</h1>
+        <div class="commodity-grid" id="commodityGrid">
+            <div class="commodity-card">
+                <span class="icon">⏳</span>
+                <span class="name">Loading...</span>
+            </div>
+        </div>
+    </section>
+
+    <button class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+
+        async function loadCommodities() {
+            try {
+                const res = await fetch(`${API_URL}/api/commodities`);
+                const data = await res.json();
+
+                const grid = document.getElementById('commodityGrid');
+                grid.innerHTML = data.commodities.map(item => `
+                    <a href="commodity-detail.html?name=${item.id}" class="commodity-card">
+                        <span class="icon">${item.icon}</span>
+                        <span class="name">${item.name}</span>
+                    </a>
+                `).join('');
+            } catch (err) {
+                console.error('Error loading commodities:', err);
+            }
+        }
+
+        loadCommodities();
+    </script>
+</body>
+
+</html>

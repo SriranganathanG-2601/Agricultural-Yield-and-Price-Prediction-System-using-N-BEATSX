@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Analytics - FutureCrop</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .chart-page {
+            padding: 30px 5%;
+            background: #f5f5f5;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin: 40px 0 20px;
+            color: var(--text-dark);
+        }
+
+        .confusion-matrix {
+            display: flex;
+            justify-content: center;
+            margin: 30px 0;
+        }
+
+        .matrix-container {
+            position: relative;
+        }
+
+        .matrix-grid {
+            display: grid;
+            grid-template-columns: 150px 150px;
+            gap: 2px;
+        }
+
+        .matrix-cell {
+            width: 150px;
+            height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: white;
+        }
+
+        .matrix-cell.low {
+            background: #1565c0;
+        }
+
+        .matrix-cell.high {
+            background: #0d47a1;
+        }
+
+        .matrix-labels {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            color: #666;
+        }
+
+        .matrix-ylabel {
+            position: absolute;
+            left: -100px;
+            top: 50%;
+            transform: rotate(-90deg);
+            white-space: nowrap;
+            color: #666;
+        }
+
+        .matrix-scale {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            margin-left: 20px;
+            font-size: 0.85rem;
+            color: #666;
+        }
+
+        .report-table {
+            max-width: 600px;
+            margin: 20px auto;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .report-table table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .report-table th,
+        .report-table td {
+            padding: 8px 15px;
+            text-align: right;
+        }
+
+        .report-table th:first-child,
+        .report-table td:first-child {
+            text-align: left;
+        }
+
+        .report-table .header {
+            border-bottom: 1px solid #ddd;
+        }
+
+        .report-table .divider {
+            border-top: 1px solid #ddd;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin: 30px 0;
+        }
+
+        .chart-box {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .chart-box h4 {
+            font-size: 0.95rem;
+            color: #666;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .chart-box canvas {
+            max-height: 250px;
+        }
+
+        .roc-container {
+            max-width: 600px;
+            margin: 30px auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .roc-container h4 {
+            text-align: center;
+            margin-bottom: 15px;
+            color: #666;
+        }
+
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <nav class="main-nav">
+        <ul>
+            <li><a href="index.html">HOME</a></li>
+            <li><a href="index.html#about">ABOUT</a></li>
+            <li><a href="index.html#services">SERVICE</a></li>
+            <li><a href="predict.html">PREDICT</a></li>
+            <li><a href="commodity.html" class="active">WORKING</a></li>
+            <li><a href="accuracy.html">ACCURACY</a></li>
+        </ul>
+    </nav>
+
+    <section class="chart-page">
+        <h2 class="section-title">Confusion Matrix</h2>
+        <div class="confusion-matrix">
+            <div class="matrix-container">
+                <span class="matrix-ylabel">Above Me</span>
+                <div class="matrix-grid">
+                    <div class="matrix-cell low" id="cm00">0</div>
+                    <div class="matrix-cell high" id="cm01">0</div>
+                    <div class="matrix-cell high" id="cm10">0</div>
+                    <div class="matrix-cell low" id="cm11">0</div>
+                </div>
+                <div class="matrix-labels">
+                    <span>Below Median</span>
+                    <span>Above Median</span>
+                </div>
+                <div style="text-align: center; margin-top: 5px; color: #666;">Predicted</div>
+            </div>
+            <div class="matrix-scale">
+                <span>- 10000</span>
+                <span>- 5000</span>
+                <span>- 0</span>
+            </div>
+        </div>
+
+        <h2 class="section-title">PRECISION, RECALL</h2>
+        <div class="report-table">
+            <table>
+                <tr class="header">
+                    <th>Classification Report:</th>
+                    <th>precision</th>
+                    <th>recall</th>
+                    <th>f1-score</th>
+                    <th>support</th>
+                </tr>
+                <tbody id="classificationBody">
+                    <tr>
+                        <td colspan="5">Loading...</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <h2 class="section-title">ROC CURVE</h2>
+        <div class="roc-container">
+            <h4>ROC Curve</h4>
+            <canvas id="rocChart" height="250"></canvas>
+        </div>
+
+        <h2 class="section-title">Accuracy Score</h2>
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h4>Model Loss</h4>
+                <canvas id="lossChart1"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>Model R-squared (Accuracy)</h4>
+                <canvas id="r2Chart1"></canvas>
+            </div>
+        </div>
+
+        <h2 class="section-title">Training Loss</h2>
+        <div class="charts-grid">
+            <div class="chart-box">
+                <h4>Model Loss</h4>
+                <canvas id="lossChart2"></canvas>
+            </div>
+            <div class="chart-box">
+                <h4>Model Accuracy (MAE)</h4>
+                <canvas id="maeChart"></canvas>
+            </div>
+        </div>
+    </section>
+
+    <button class="scroll-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <script>
+        const API_URL = 'http://127.0.0.1:5000';
+
+        async function loadMetrics() {
+            try {
+                const res = await fetch(`${API_URL}/api/metrics`);
+                const data = await res.json();
+
+                // Confusion Matrix
+                document.getElementById('cm00').textContent = data.confusionMatrix.fn;
+                document.getElementById('cm01').textContent = data.confusionMatrix.tp;
+                document.getElementById('cm10').textContent = data.confusionMatrix.tn;
+                document.getElementById('cm11').textContent = data.confusionMatrix.fp;
+
+                // Classification Report
+                const classBody = document.getElementById('classificationBody');
+                classBody.innerHTML = `
+                    <tr>
+                        <td>0</td>
+                        <td>${data.classification.class_0.precision.toFixed(2)}</td>
+                        <td>${data.classification.class_0.recall.toFixed(2)}</td>
+                        <td>${data.classification.class_0.f1.toFixed(2)}</td>
+                        <td>${data.classification.class_0.support}</td>
+                    </tr>
+                    <tr>
+                        <td>1</td>
+                        <td>${data.classification.class_1.precision.toFixed(2)}</td>
+                        <td>${data.classification.class_1.recall.toFixed(2)}</td>
+                        <td>${data.classification.class_1.f1.toFixed(2)}</td>
+                        <td>${data.classification.class_1.support}</td>
+                    </tr>
+                    <tr class="divider">
+                        <td>accuracy</td>
+                        <td></td>
+                        <td></td>
+                        <td>${data.classification.accuracy.toFixed(2)}</td>
+                        <td>${data.classification.total_support}</td>
+                    </tr>
+                    <tr>
+                        <td>macro avg</td>
+                        <td>1.00</td>
+                        <td>1.00</td>
+                        <td>1.00</td>
+                        <td>${data.classification.total_support}</td>
+                    </tr>
+                    <tr>
+                        <td>weighted avg</td>
+                        <td>1.00</td>
+                        <td>1.00</td>
+                        <td>1.00</td>
+                        <td>${data.classification.total_support}</td>
+                    </tr>
+                `;
+
+                // ROC Curve
+                new Chart(document.getElementById('rocChart'), {
+                    type: 'line',
+                    data: {
+                        labels: data.roc.fpr,
+                        datasets: [{
+                            label: `ROC Curve (AUC = ${data.roc.auc})`,
+                            data: data.roc.tpr,
+                            borderColor: '#1e88e5',
+                            backgroundColor: 'rgba(30, 136, 229, 0.1)',
+                            fill: true,
+                            tension: 0.3
+                        }, {
+                            label: 'Random',
+                            data: data.roc.fpr,
+                            borderColor: '#999',
+                            borderDash: [5, 5],
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: 'False Positive Rate' } },
+                            y: { title: { display: true, text: 'True Positive Rate' }, min: 0, max: 1 }
+                        }
+                    }
+                });
+
+                // Training curves
+                const epochs = data.trainingCurves.epochs;
+
+                // Model Loss 1
+                new Chart(document.getElementById('lossChart1'), {
+                    type: 'line',
+                    data: {
+                        labels: epochs,
+                        datasets: [{
+                            label: 'Training Loss',
+                            data: data.trainingCurves.trainingLoss,
+                            borderColor: '#1e88e5',
+                            borderWidth: 2,
+                            fill: false
+                        }, {
+                            label: 'Validation Loss',
+                            data: data.trainingCurves.validationLoss,
+                            borderColor: '#f57c00',
+                            borderWidth: 2,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: 'epoch' } },
+                            y: { title: { display: true, text: 'Loss (MSE)' } }
+                        }
+                    }
+                });
+
+                // R-squared
+                new Chart(document.getElementById('r2Chart1'), {
+                    type: 'line',
+                    data: {
+                        labels: epochs,
+                        datasets: [{
+                            label: 'Training R-squared',
+                            data: data.trainingCurves.r2Training,
+                            borderColor: '#1e88e5',
+                            borderWidth: 2,
+                            fill: false
+                        }, {
+                            label: 'Testing R-squared',
+                            data: data.trainingCurves.r2Validation,
+                            borderColor: '#f57c00',
+                            borderWidth: 2,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: 'epoch' } },
+                            y: { title: { display: true, text: 'R-squared' } }
+                        }
+                    }
+                });
+
+                // Model Loss 2
+                new Chart(document.getElementById('lossChart2'), {
+                    type: 'line',
+                    data: {
+                        labels: epochs,
+                        datasets: [{
+                            label: 'Training Loss',
+                            data: data.trainingCurves.trainingLoss.map(v => v * 0.9),
+                            borderColor: '#2e7d32',
+                            borderWidth: 2,
+                            fill: false
+                        }, {
+                            label: 'Validation Loss',
+                            data: data.trainingCurves.validationLoss.map(v => v * 0.9),
+                            borderColor: '#f57c00',
+                            borderWidth: 2,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: 'Epoch' } },
+                            y: { title: { display: true, text: 'Loss' } }
+                        }
+                    }
+                });
+
+                // MAE Chart
+                new Chart(document.getElementById('maeChart'), {
+                    type: 'line',
+                    data: {
+                        labels: epochs,
+                        datasets: [{
+                            label: 'Training MAE',
+                            data: data.trainingCurves.maeTraining,
+                            borderColor: '#2e7d32',
+                            borderWidth: 2,
+                            fill: false
+                        }, {
+                            label: 'Validation MAE',
+                            data: data.trainingCurves.maeValidation,
+                            borderColor: '#f57c00',
+                            borderWidth: 2,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            x: { title: { display: true, text: 'Epoch' } },
+                            y: { title: { display: true, text: 'MAE' } }
+                        }
+                    }
+                });
+
+            } catch (err) {
+                console.error('Error loading metrics:', err);
+            }
+        }
+
+        loadMetrics();
+    </script>
+</body>
+
+</html>
